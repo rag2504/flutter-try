@@ -1,0 +1,104 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import '../models/user_model.dart';
+
+class DatabaseHelper {
+  static final DatabaseHelper _instance = DatabaseHelper._internal();
+  static Database? _database;
+
+  factory DatabaseHelper() {
+    return _instance;
+  }
+
+  DatabaseHelper._internal();
+
+  Future<Database> get database async {
+    if (_database != null) return _database!;
+    _database = await _initDB();
+    return _database!;
+  }
+
+  Future<Database> _initDB() async {
+    String path = join(await getDatabasesPath(), 'matrimony.db');
+
+    if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+      // Ensure FFI is initialized
+      sqfliteFfiInit();
+      return await databaseFactoryFfi.openDatabase(path);
+    } else {
+      return await openDatabase(
+        path,
+        version: 0,
+        onCreate: (db, version) async {
+          await db.execute('''
+            CREATE TABLE users (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              name TEXT NOT NULL,
+              email TEXT UNIQUE NOT NULL,
+              mobile TEXT NOT NULL,
+              age INTEGER NOT NULL CHECK (age >= 18),
+              city TEXT NOT NULL,
+              gender TEXT NOT NULL,
+              password TEXT NOT NULL,
+              isFavorite INTEGER DEFAULT 0
+            )
+          ''');
+        },
+      );
+    }
+  }
+
+  Future<int> insertUser(User user) async {
+    final db = await database;
+    return await db.insert('users', user.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<List<User>> getUsers() async {
+    final db = await database;
+    List<Map<String, dynamic>> results = await db.query('users');
+    return results.map((map) => User.fromMap(map)).toList();
+  }
+
+  Future<bool> validateUser(String email, String password) async {
+    final db = await database;
+    List<Map<String, dynamic>> result = await db.query(
+      'users',
+      where: 'email = ? AND password = ?',
+      whereArgs: [email, password],
+    );
+    return result.isNotEmpty;
+  }
+
+  Future<List<User>> getFavoriteUsers() async {
+    final db = await database;
+    List<Map<String, dynamic>> results =
+    await db.query('users', where: 'isFavorite = ?', whereArgs: [1]);
+    return results.map((map) => User.fromMap(map)).toList();
+  }
+
+  Future<void> toggleFavorite(int id) async {
+    final db = await database;
+
+    // Get user's current favorite status
+    List<Map<String, dynamic>> result = await db.query(
+      'users',
+      columns: ['isFavorite'],
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+
+    if (result.isNotEmpty) {
+      int newFavoriteStatus = (result.first['isFavorite'] as int) == 1 ? 0 : 1;
+      await db.update(
+        'users',
+        {'isFavorite': newFavoriteStatus},
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+    }
+  }
+}
