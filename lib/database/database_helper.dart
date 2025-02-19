@@ -1,8 +1,6 @@
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import '../models/user_model.dart';
 
 class DatabaseHelper {
@@ -24,37 +22,36 @@ class DatabaseHelper {
   Future<Database> _initDB() async {
     String path = join(await getDatabasesPath(), 'matrimony.db');
 
-    if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
-      // Ensure FFI is initialized
-      sqfliteFfiInit();
-      return await databaseFactoryFfi.openDatabase(path);
-    } else {
-      return await openDatabase(
-        path,
-        version: 0,
-        onCreate: (db, version) async {
-          await db.execute('''
-            CREATE TABLE users (
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              name TEXT NOT NULL,
-              email TEXT UNIQUE NOT NULL,
-              mobile TEXT NOT NULL,
-              age INTEGER NOT NULL CHECK (age >= 18),
-              city TEXT NOT NULL,
-              gender TEXT NOT NULL,
-              password TEXT NOT NULL,
-              isFavorite INTEGER DEFAULT 0
-            )
-          ''');
-        },
-      );
-    }
+    return await openDatabase(
+      path,
+      version: 1,
+      onCreate: (db, version) async {
+        await db.execute('''
+          CREATE TABLE users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            mobile TEXT NOT NULL,
+            age INTEGER NOT NULL CHECK (age >= 18),
+            city TEXT NOT NULL,
+            gender TEXT NOT NULL,
+            password TEXT NOT NULL,
+            isFavorite INTEGER DEFAULT 0
+          )
+        ''');
+      },
+    );
   }
 
   Future<int> insertUser(User user) async {
-    final db = await database;
-    return await db.insert('users', user.toMap(),
-        conflictAlgorithm: ConflictAlgorithm.replace);
+    try {
+      final db = await database;
+      return await db.insert('users', user.toMap(),
+          conflictAlgorithm: ConflictAlgorithm.replace);
+    } catch (e) {
+      print("Error inserting user: $e");
+      return -1; // indicate an error condition
+    }
   }
 
   Future<List<User>> getUsers() async {

@@ -16,6 +16,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
   final TextEditingController _mobileController = TextEditingController();
   final TextEditingController _ageController = TextEditingController();
   final TextEditingController _cityController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   String? _selectedGender;
 
   @override
@@ -25,6 +26,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
     _mobileController.dispose();
     _ageController.dispose();
     _cityController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -43,11 +45,16 @@ class _AddUserScreenState extends State<AddUserScreen> {
         age: age,
         city: _cityController.text,
         gender: _selectedGender!,
+        password: _passwordController.text,
       );
 
-      await _dbHelper.insertUser(user);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('User Added!')));
-      Navigator.pop(context);
+      int result = await _dbHelper.insertUser(user);
+      if (result != -1) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('User Added!')));
+        Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to add user.')));
+      }
     }
   }
 
@@ -98,6 +105,12 @@ class _AddUserScreenState extends State<AddUserScreen> {
                   onChanged: (value) => setState(() => _selectedGender = value),
                   decoration: InputDecoration(labelText: 'Gender'),
                   validator: (value) => value == null ? 'Select gender' : null,
+                ),
+                TextFormField(
+                  controller: _passwordController,
+                  decoration: InputDecoration(labelText: 'Password'),
+                  validator: (value) => value!.isEmpty ? 'Enter password' : null,
+                  obscureText: true,
                 ),
                 SizedBox(height: 20),
                 ElevatedButton(onPressed: _addUser, child: Text('Add User')),

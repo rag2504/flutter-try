@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../database/database_helper.dart';
 import '../models/user_model.dart';
+import 'add_user_screen.dart';
 
 class UserListScreen extends StatefulWidget {
   @override
@@ -22,7 +23,7 @@ class _UserListScreenState extends State<UserListScreen> {
 
   @override
   void dispose() {
-    _searchController.dispose(); // Fix: Dispose controller to prevent memory leaks
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -44,23 +45,24 @@ class _UserListScreenState extends State<UserListScreen> {
     });
   }
 
-  void _toggleFavorite(int userId) async {
-    await _dbHelper.toggleFavorite(userId);
-    setState(() {
-      for (var user in _users) {
-        if (user.id == userId) {
-          user.isFavorite = !user.isFavorite; // Update only the toggled user
-          break;
-        }
-      }
-      _filterUsers(); // Apply search filter again
-    });
+  void _navigateToAddUserScreen() async {
+    bool? userAdded = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => AddUserScreen()),
+    );
+    if (userAdded == true) {
+      _fetchUsers(); // Refresh user list
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('User List')),
+      floatingActionButton: FloatingActionButton(
+        child: Icon(Icons.add),
+        onPressed: _navigateToAddUserScreen,
+      ),
       body: Column(
         children: [
           Padding(
@@ -82,13 +84,8 @@ class _UserListScreenState extends State<UserListScreen> {
                 return Card(
                   margin: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
                   child: ListTile(
-                    leading: CircleAvatar(child: Text(user.name[0])),
                     title: Text(user.name),
                     subtitle: Text('${user.age} years old, ${user.city}'),
-                    trailing: IconButton(
-                      icon: Icon(user.isFavorite ? Icons.favorite : Icons.favorite_border, color: user.isFavorite ? Colors.red : null),
-                      onPressed: () => _toggleFavorite(user.id!),
-                    ),
                   ),
                 );
               },

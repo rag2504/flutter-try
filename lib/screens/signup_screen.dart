@@ -27,6 +27,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         age: 18, // Default age (to be changed in Add User form)
         city: '',
         gender: _selectedGender!,
+        password: _passwordController.text,
       );
       await _dbHelper.insertUser(user);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('User Registered!')));

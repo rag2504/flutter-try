@@ -6,20 +6,14 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.0.0 <4.0.0'  # Keep SDK version compatible
+  sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
-
-  # **SQLite Database Dependencies**
-  sqflite: ^2.3.0          # SQLite for Android/iOS
-  path_provider: ^2.1.2    # Helps in finding the database path
-  path: ^1.8.3             # Required for working with file paths
-
-  # **Web & Desktop SQLite Support**
-  sqflite_common_ffi: ^2.3.2        # SQLite support for Windows, Mac, Linux
-  sqflite_common_ffi_web: ^0.4.5+4  # Correct version for Flutter Web
+  sqflite: ^2.0.0+4
+  path: ^1.8.0
+  path_provider: ^2.1.2  # Required for working with file paths
   flutter_platform_widgets: ^3.0.0  # Helps in handling platform differences
 
 dev_dependencies:

@@ -4,18 +4,13 @@ import 'package:flutter/material.dart';
 import 'screens/login_screen.dart';
 import 'database/database_helper.dart';
 
-// Import correct SQLite library based on platform
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   if (kIsWeb) {
-    databaseFactory = databaseFactoryFfiWeb; // Use web-compatible database
+    // Web-specific initialization if needed
   } else {
-    sqfliteFfiInit();
-    databaseFactory = databaseFactoryFfi;
+    // Mobile-specific initialization if needed
   }
 
   try {
