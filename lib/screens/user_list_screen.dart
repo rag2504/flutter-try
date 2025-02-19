@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 import '../database/database_helper.dart';
 import '../models/user_model.dart';
 import 'add_user_screen.dart';
@@ -55,6 +56,32 @@ class _UserListScreenState extends State<UserListScreen> {
     }
   }
 
+  void _editUser(User user) async {
+    // Navigate to AddUserScreen with user data for editing
+    bool? userEdited = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => AddUserScreen(user: user)),
+    );
+    if (userEdited == true) {
+      _fetchUsers(); // Refresh user list
+    }
+  }
+
+  void _deleteUser(int userId) async {
+    await _dbHelper.deleteUser(userId);
+    _fetchUsers(); // Refresh user list
+  }
+
+  void _toggleFavorite(User user) async {
+    await _dbHelper.toggleFavorite(user.id!);
+    setState(() {
+      user.isFavorite = user.isFavorite == 1 ? 0 : 1;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(user.isFavorite == 1 ? 'User marked as favorite!' : 'User marked as unfavorite!')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -84,8 +111,39 @@ class _UserListScreenState extends State<UserListScreen> {
                 return Card(
                   margin: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
                   child: ListTile(
+                    leading: GestureDetector(
+                      onTap: () => _toggleFavorite(user),
+                      child: CircleAvatar(
+                        backgroundImage: user.profileImagePath != null
+                            ? FileImage(File(user.profileImagePath!))
+                            : null,
+                        child: user.profileImagePath == null
+                            ? Icon(Icons.person)
+                            : null,
+                      ),
+                    ),
                     title: Text(user.name),
-                    subtitle: Text('${user.age} years old, ${user.city}'),
+                    subtitle: Text(user.city),
+                    trailing: PopupMenuButton<String>(
+                      onSelected: (String value) {
+                        switch (value) {
+                          case 'edit':
+                            _editUser(user);
+                            break;
+                          case 'delete':
+                            _deleteUser(user.id!);
+                            break;
+                        }
+                      },
+                      itemBuilder: (BuildContext context) {
+                        return {'Edit', 'Delete'}.map((String choice) {
+                          return PopupMenuItem<String>(
+                            value: choice.toLowerCase(),
+                            child: Text(choice),
+                          );
+                        }).toList();
+                      },
+                    ),
                   ),
                 );
               },

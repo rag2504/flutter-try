@@ -6,8 +6,9 @@ class User {
   int age;
   String city;
   String gender;
-  String password; // Added password field
-  bool isFavorite;
+  String password;
+  String? profileImagePath;
+  int isFavorite;
 
   User({
     this.id,
@@ -17,8 +18,9 @@ class User {
     required this.age,
     required this.city,
     required this.gender,
-    required this.password, // Ensure password is required
-    this.isFavorite = false,
+    required this.password,
+    this.profileImagePath,
+    this.isFavorite = 0,
   });
 
   Map<String, dynamic> toMap() {
@@ -30,8 +32,9 @@ class User {
       'age': age,
       'city': city,
       'gender': gender,
-      'password': password, // Ensure password is saved
-      'isFavorite': isFavorite ? 1 : 0,
+      'password': password,
+      'profileImagePath': profileImagePath,
+      'isFavorite': isFavorite,
     };
   }
 
@@ -44,8 +47,9 @@ class User {
       age: map['age'],
       city: map['city'],
       gender: map['gender'],
-      password: map['password'], // Retrieve password
-      isFavorite: map['isFavorite'] == 1,
+      password: map['password'],
+      profileImagePath: map['profileImagePath'],
+      isFavorite: map['isFavorite'],
     );
   }
 }

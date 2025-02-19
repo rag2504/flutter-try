@@ -54,6 +54,35 @@ class DatabaseHelper {
     }
   }
 
+  Future<int> updateUser(User user) async {
+    try {
+      final db = await database;
+      return await db.update(
+        'users',
+        user.toMap(),
+        where: 'id = ?',
+        whereArgs: [user.id],
+      );
+    } catch (e) {
+      print("Error updating user: $e");
+      return -1; // indicate an error condition
+    }
+  }
+
+  Future<int> deleteUser(int id) async {
+    try {
+      final db = await database;
+      return await db.delete(
+        'users',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+    } catch (e) {
+      print("Error deleting user: $e");
+      return -1; // indicate an error condition
+    }
+  }
+
   Future<List<User>> getUsers() async {
     final db = await database;
     List<Map<String, dynamic>> results = await db.query('users');
@@ -72,8 +101,11 @@ class DatabaseHelper {
 
   Future<List<User>> getFavoriteUsers() async {
     final db = await database;
-    List<Map<String, dynamic>> results =
-    await db.query('users', where: 'isFavorite = ?', whereArgs: [1]);
+    List<Map<String, dynamic>> results = await db.query(
+      'users',
+      where: 'isFavorite = ?',
+      whereArgs: [1],
+    );
     return results.map((map) => User.fromMap(map)).toList();
   }
 

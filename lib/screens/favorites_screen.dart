@@ -24,11 +24,15 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     });
   }
 
-  void _removeFromFavorites(int userId) async {
-    await _dbHelper.toggleFavorite(userId);
+  void _removeFromFavorites(User user) async {
+    await _dbHelper.toggleFavorite(user.id!);
     setState(() {
-      _favorites.removeWhere((user) => user.id == userId); // Remove only the unfavored user
+      user.isFavorite = 0;
+      _favorites.remove(user); // Remove only the unfavored user
     });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('User marked as unfavorite!')),
+    );
   }
 
   @override
@@ -49,7 +53,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               subtitle: Text('${user.age} years old, ${user.city}'),
               trailing: IconButton(
                 icon: Icon(Icons.favorite, color: Colors.red),
-                onPressed: () => _removeFromFavorites(user.id!),
+                onPressed: () => _removeFromFavorites(user),
               ),
             ),
           );
