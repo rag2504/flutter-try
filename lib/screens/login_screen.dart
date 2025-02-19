@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'home_screen.dart';
 import 'signup_screen.dart';
 import '../database/database_helper.dart';
+import '../models/user_model.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -20,9 +21,13 @@ class _LoginScreenState extends State<LoginScreen> {
       bool isValid = await _dbHelper.validateUser(_email, _password);
 
       if (isValid) {
-        print('Login successful'); // Debugging statement
-        await Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (_) => HomeScreen()));
+        User? user = await _dbHelper.getUserByEmail(_email);
+        if (user != null) {
+          await Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => HomeScreen(user: user)),
+          );
+        }
       } else {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('Invalid email or password!')));
@@ -33,34 +38,92 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Login')),
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                decoration: InputDecoration(labelText: 'Email'),
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) =>
-                value!.isEmpty || !value.contains('@') ? 'Enter a valid email' : null,
-                onSaved: (value) => _email = value!,
+      appBar: AppBar(
+        title: Text('Login'),
+        backgroundColor: Colors.teal,
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.teal.shade50, Colors.teal.shade200],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16.0),
+          child: Center(
+            child: SingleChildScrollView(
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Welcome Back!',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.teal.shade900,
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    TextFormField(
+                      decoration: InputDecoration(
+                        labelText: 'Email',
+                        prefixIcon: Icon(Icons.email),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white.withOpacity(0.8),
+                      ),
+                      keyboardType: TextInputType.emailAddress,
+                      validator: (value) =>
+                      value!.isEmpty || !value.contains('@')
+                          ? 'Enter a valid email'
+                          : null,
+                      onSaved: (value) => _email = value!,
+                    ),
+                    SizedBox(height: 20),
+                    TextFormField(
+                      decoration: InputDecoration(
+                        labelText: 'Password',
+                        prefixIcon: Icon(Icons.lock),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white.withOpacity(0.8),
+                      ),
+                      obscureText: true,
+                      validator: (value) =>
+                      value!.isEmpty ? 'Enter your password' : null,
+                      onSaved: (value) => _password = value!,
+                    ),
+                    SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: _login,
+                      child: Text('Login'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.teal,
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 50, vertical: 15),
+                        textStyle: TextStyle(fontSize: 18),
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    TextButton(
+                      child: Text("Don't have an account? Sign Up"),
+                      onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => SignUpScreen())),
+                    ),
+                  ],
+                ),
               ),
-              TextFormField(
-                decoration: InputDecoration(labelText: 'Password'),
-                obscureText: true,
-                validator: (value) => value!.isEmpty ? 'Enter your password' : null,
-                onSaved: (value) => _password = value!,
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(onPressed: _login, child: Text('Login')),
-              TextButton(
-                child: Text("Don't have an account? Sign Up"),
-                onPressed: () => Navigator.push(
-                    context, MaterialPageRoute(builder: (_) => SignUpScreen())),
-              ),
-            ],
+            ),
           ),
         ),
       ),

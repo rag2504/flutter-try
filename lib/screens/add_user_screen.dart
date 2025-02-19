@@ -36,10 +36,10 @@ class _AddUserScreenState extends State<AddUserScreen> {
     super.initState();
     if (widget.user != null) {
       _firstNameController.text = widget.user!.name.split(' ')[0];
-      _lastNameController.text = widget.user!.name.split(' ')[1];
+      _lastNameController.text = widget.user!.name.split(' ').length > 1 ? widget.user!.name.split(' ')[1] : '';
       _emailController.text = widget.user!.email;
       _mobileController.text = widget.user!.mobile;
-      _dobController.text = widget.user!.age.toString();
+      _dobController.text = DateFormat('dd/MM/yyyy').format(DateTime.now().subtract(Duration(days: 365 * widget.user!.age)));
       _passwordController.text = widget.user!.password;
       _confirmPasswordController.text = widget.user!.password;
       _selectedGender = widget.user!.gender;

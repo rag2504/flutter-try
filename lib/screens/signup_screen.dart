@@ -38,50 +38,136 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Sign Up')),
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: InputDecoration(labelText: 'Full Name'),
-                validator: (value) => value!.isEmpty ? 'Enter full name' : null,
+      appBar: AppBar(
+        title: Text('Sign Up'),
+        backgroundColor: Colors.teal,
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.teal.shade50, Colors.teal.shade200],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16.0),
+          child: Center(
+            child: SingleChildScrollView(
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Create an Account',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.teal.shade900,
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    TextFormField(
+                      controller: _nameController,
+                      decoration: InputDecoration(
+                        labelText: 'Full Name',
+                        prefixIcon: Icon(Icons.person),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white.withOpacity(0.8),
+                      ),
+                      validator: (value) =>
+                      value!.isEmpty ? 'Enter full name' : null,
+                    ),
+                    SizedBox(height: 20),
+                    TextFormField(
+                      controller: _emailController,
+                      decoration: InputDecoration(
+                        labelText: 'Email',
+                        prefixIcon: Icon(Icons.email),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white.withOpacity(0.8),
+                      ),
+                      validator: Validations.validateEmail,
+                    ),
+                    SizedBox(height: 20),
+                    TextFormField(
+                      controller: _mobileController,
+                      decoration: InputDecoration(
+                        labelText: 'Mobile Number',
+                        prefixIcon: Icon(Icons.phone),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white.withOpacity(0.8),
+                      ),
+                      validator: Validations.validateMobile,
+                    ),
+                    SizedBox(height: 20),
+                    TextFormField(
+                      controller: _passwordController,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        labelText: 'Password',
+                        prefixIcon: Icon(Icons.lock),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white.withOpacity(0.8),
+                      ),
+                      validator: Validations.validatePassword,
+                    ),
+                    SizedBox(height: 20),
+                    DropdownButtonFormField<String>(
+                      value: _selectedGender,
+                      items: ['Male', 'Female', 'Other'].map((gender) {
+                        return DropdownMenuItem(
+                            value: gender, child: Text(gender));
+                      }).toList(),
+                      onChanged: (value) =>
+                          setState(() => _selectedGender = value),
+                      decoration: InputDecoration(
+                        labelText: 'Gender',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white.withOpacity(0.8),
+                      ),
+                      validator: (value) =>
+                      value == null ? 'Select gender' : null,
+                    ),
+                    SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: _registerUser,
+                      child: Text('Sign Up'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.teal,
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 50, vertical: 15),
+                        textStyle: TextStyle(fontSize: 18),
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    TextButton(
+                      child: Text('Already have an account? Login'),
+                      onPressed: () => Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => LoginScreen())),
+                    ),
+                  ],
+                ),
               ),
-              TextFormField(
-                controller: _emailController,
-                decoration: InputDecoration(labelText: 'Email'),
-                validator: Validations.validateEmail,
-              ),
-              TextFormField(
-                controller: _mobileController,
-                decoration: InputDecoration(labelText: 'Mobile Number'),
-                validator: Validations.validateMobile,
-              ),
-              TextFormField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: InputDecoration(labelText: 'Password'),
-                validator: Validations.validatePassword,
-              ),
-              DropdownButtonFormField<String>(
-                value: _selectedGender,
-                items: ['Male', 'Female', 'Other'].map((gender) {
-                  return DropdownMenuItem(value: gender, child: Text(gender));
-                }).toList(),
-                onChanged: (value) => setState(() => _selectedGender = value),
-                decoration: InputDecoration(labelText: 'Gender'),
-                validator: (value) => value == null ? 'Select gender' : null,
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(onPressed: _registerUser, child: Text('Sign Up')),
-              TextButton(
-                onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LoginScreen())),
-                child: Text('Already have an account? Login'),
-              ),
-            ],
+            ),
           ),
         ),
       ),
