@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:intl/intl.dart';
+import 'package:flutter/services.dart';
 import '../database/database_helper.dart';
 import '../models/user_model.dart';
 
@@ -27,6 +28,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
   final TextEditingController _confirmPasswordController = TextEditingController();
   final TextEditingController _cityController = TextEditingController();
   String? _selectedGender;
+  String? _selectedCity;
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
   File? _profileImage;
@@ -43,7 +45,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
       _passwordController.text = widget.user!.password;
       _confirmPasswordController.text = widget.user!.password;
       _selectedGender = widget.user!.gender;
-      _cityController.text = widget.user!.city;
+      _selectedCity = widget.user!.city;
       if (widget.user!.profileImagePath != null) {
         _profileImage = File(widget.user!.profileImagePath!);
       }
@@ -96,7 +98,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
   }
 
   void _addUser() async {
-    if (_formKey.currentState!.validate() && _selectedGender != null) {
+    if (_formKey.currentState!.validate() && _selectedGender != null && _selectedCity != null) {
       if (_passwordController.text != _confirmPasswordController.text) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Passwords do not match')));
         return;
@@ -114,7 +116,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
         email: _emailController.text,
         mobile: _mobileController.text,
         age: age,
-        city: _cityController.text,
+        city: _selectedCity!,
         gender: _selectedGender!,
         password: _passwordController.text,
         profileImagePath: _profileImage?.path,
@@ -140,11 +142,13 @@ class _AddUserScreenState extends State<AddUserScreen> {
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now().subtract(Duration(days: 365 * 18)),
+      initialDate: _dobController.text.isNotEmpty
+          ? DateFormat('dd/MM/yyyy').parse(_dobController.text)
+          : DateTime.now().subtract(Duration(days: 365 * 18)),
       firstDate: DateTime(1900),
       lastDate: DateTime.now().subtract(Duration(days: 365 * 18)),
     );
-    if (picked != null && picked != DateTime.now()) {
+    if (picked != null) {
       setState(() {
         _dobController.text = DateFormat('dd/MM/yyyy').format(picked);
       });
@@ -184,9 +188,9 @@ class _AddUserScreenState extends State<AddUserScreen> {
                   ),
                 ),
                 SizedBox(height: 20),
-                _buildTextField(_firstNameController, 'First Name', _validateName),
-                _buildTextField(_lastNameController, 'Last Name', _validateName),
-                _buildTextField(_emailController, 'Email', (value) => RegExp(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$").hasMatch(value!) ? null : 'Enter a valid email'),
+                _buildTextField(_firstNameController, 'First Name', _validateName, TextInputType.name, TextCapitalization.words),
+                _buildTextField(_lastNameController, 'Last Name', _validateName, TextInputType.name, TextCapitalization.words),
+                _buildTextField(_emailController, 'Email', (value) => RegExp(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$").hasMatch(value!) ? null : 'Enter a valid email', TextInputType.emailAddress),
                 _buildPasswordField(_passwordController, 'Password', _isPasswordVisible, () {
                   setState(() {
                     _isPasswordVisible = !_isPasswordVisible;
@@ -197,10 +201,10 @@ class _AddUserScreenState extends State<AddUserScreen> {
                     _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
                   });
                 }),
-                _buildTextField(_mobileController, 'Mobile Number', (value) => value!.length == 10 ? null : 'Enter a valid 10-digit number', keyboardType: TextInputType.phone, maxLength: 10),
-                _buildTextField(_cityController, 'City', (value) => value == null || value.isEmpty ? 'Enter city' : null),
+                _buildTextField(_mobileController, 'Mobile Number', (value) => value!.length == 10 ? null : 'Enter a valid 10-digit number', TextInputType.phone, TextCapitalization.none, [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)]),
+                _buildDropdownCityField(),
                 _buildDateField(_dobController, 'Date of Birth', 'DD/MM/YYYY'),
-                _buildDropdownField(),
+                _buildDropdownGenderField(),
                 SizedBox(height: 20),
                 Center(
                   child: ElevatedButton(
@@ -221,7 +225,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String labelText, String? Function(String?) validator, {TextInputType keyboardType = TextInputType.text, int maxLength = 100}) {
+  Widget _buildTextField(TextEditingController controller, String labelText, String? Function(String?) validator, TextInputType keyboardType, [TextCapitalization capitalization = TextCapitalization.none, List<TextInputFormatter>? inputFormatters]) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: TextFormField(
@@ -231,10 +235,12 @@ class _AddUserScreenState extends State<AddUserScreen> {
           border: OutlineInputBorder(),
           filled: true,
           fillColor: Colors.white.withOpacity(0.8),
+          counterText: '', // Remove character counter
         ),
         validator: validator,
         keyboardType: keyboardType,
-        maxLength: maxLength,
+        textCapitalization: capitalization,
+        inputFormatters: inputFormatters,
       ),
     );
   }
@@ -253,6 +259,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
             icon: Icon(isPasswordVisible ? Icons.visibility : Icons.visibility_off),
             onPressed: onSuffixIconPressed,
           ),
+          counterText: '', // Remove character counter
         ),
         validator: _validatePassword,
         obscureText: !isPasswordVisible,
@@ -275,6 +282,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
             icon: Icon(Icons.calendar_today),
             onPressed: () => _selectDate(context),
           ),
+          counterText: '', // Remove character counter
         ),
         readOnly: true,
         validator: (value) => value!.isEmpty ? 'Enter date of birth' : null,
@@ -282,7 +290,28 @@ class _AddUserScreenState extends State<AddUserScreen> {
     );
   }
 
-  Widget _buildDropdownField() {
+  Widget _buildDropdownCityField() {
+    final cities = ["Ahmedabad", "Surat", "Vadodara", "Rajkot", "Bhavnagar", "Jamnagar", "Junagadh", "Gandhinagar"];
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: DropdownButtonFormField<String>(
+        value: _selectedCity,
+        items: cities.map((city) {
+          return DropdownMenuItem(value: city, child: Text(city));
+        }).toList(),
+        onChanged: (value) => setState(() => _selectedCity = value),
+        decoration: InputDecoration(
+          labelText: 'City',
+          border: OutlineInputBorder(),
+          filled: true,
+          fillColor: Colors.white.withOpacity(0.8),
+        ),
+        validator: (value) => value == null ? 'Select city' : null,
+      ),
+    );
+  }
+
+  Widget _buildDropdownGenderField() {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: DropdownButtonFormField<String>(

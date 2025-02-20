@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'home_screen.dart';
 import 'signup_screen.dart';
 import '../database/database_helper.dart';
@@ -23,6 +24,10 @@ class _LoginScreenState extends State<LoginScreen> {
       if (isValid) {
         User? user = await _dbHelper.getUserByEmail(_email);
         if (user != null) {
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          await prefs.setBool('isLoggedIn', true);
+          await prefs.setString('userEmail', _email);
+
           await Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (_) => HomeScreen(user: user)),

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'add_user_screen.dart';
 import 'user_list_screen.dart';
 import 'favorites_screen.dart';
 import 'about_screen.dart';
+import 'login_screen.dart';
 import '../models/user_model.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -10,12 +12,27 @@ class HomeScreen extends StatelessWidget {
 
   HomeScreen({required this.user});
 
+  Future<void> _logout(BuildContext context) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => LoginScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Matrimony App'),
         backgroundColor: Colors.teal,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.logout),
+            onPressed: () => _logout(context),
+          ),
+        ],
       ),
       body: Container(
         decoration: BoxDecoration(

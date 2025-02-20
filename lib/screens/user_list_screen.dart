@@ -16,6 +16,9 @@ class _UserListScreenState extends State<UserListScreen> {
   List<User> _filteredUsers = [];
   TextEditingController _searchController = TextEditingController();
   String _selectedGender = 'All';
+  bool _isSortedAZ = false;
+  int? _filterAge;
+  DateTime? _filterDOB;
 
   @override
   void initState() {
@@ -45,9 +48,125 @@ class _UserListScreenState extends State<UserListScreen> {
         bool matchesSearch = user.name.toLowerCase().contains(query) ||
             user.city.toLowerCase().contains(query);
         bool matchesGender = _selectedGender == 'All' || user.gender == _selectedGender;
-        return matchesSearch && matchesGender;
+        bool matchesAge = _filterAge == null || user.age >= _filterAge!;
+        bool matchesDOB = _filterDOB == null || DateTime.now().subtract(Duration(days: 365 * user.age)).isAfter(_filterDOB!);
+        return matchesSearch && matchesGender && matchesAge && matchesDOB;
       }).toList();
+      _sortUsers();
     });
+  }
+
+  void _sortUsers() {
+    setState(() {
+      _filteredUsers.sort((a, b) {
+        if (a.isFavorite != b.isFavorite) {
+          return b.isFavorite - a.isFavorite;
+        }
+        return _isSortedAZ
+            ? a.name.toLowerCase().compareTo(b.name.toLowerCase())
+            : b.name.toLowerCase().compareTo(a.name.toLowerCase());
+      });
+    });
+  }
+
+  void _toggleSortOrder() {
+    setState(() {
+      _isSortedAZ = !_isSortedAZ;
+      _sortUsers();
+    });
+  }
+
+  void _showFilterDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Filter Users'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  title: Text('Sort by Name (A-Z)'),
+                  trailing: Checkbox(
+                    value: _isSortedAZ,
+                    onChanged: (bool? value) {
+                      setState(() {
+                        _isSortedAZ = value ?? false;
+                        _sortUsers();
+                        Navigator.of(context).pop();
+                      });
+                    },
+                  ),
+                ),
+                ListTile(
+                  title: Text('Filter by Age (>=)'),
+                  trailing: DropdownButton<int>(
+                    value: _filterAge,
+                    items: List.generate(100, (index) => index + 1)
+                        .map((age) => DropdownMenuItem<int>(
+                      value: age,
+                      child: Text('$age'),
+                    ))
+                        .toList(),
+                    onChanged: (int? value) {
+                      setState(() {
+                        _filterAge = value;
+                        _filterUsers();
+                        Navigator.of(context).pop();
+                      });
+                    },
+                  ),
+                ),
+                ListTile(
+                  title: Text('Filter by DOB (After)'),
+                  trailing: TextButton(
+                    child: Text(_filterDOB == null
+                        ? 'Select Date'
+                        : DateFormat('dd/MM/yyyy').format(_filterDOB!)),
+                    onPressed: () async {
+                      DateTime? picked = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(1900),
+                        lastDate: DateTime.now(),
+                      );
+                      if (picked != null) {
+                        setState(() {
+                          _filterDOB = picked;
+                          _filterUsers();
+                          Navigator.of(context).pop();
+                        });
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              child: Text('Clear Filters'),
+              onPressed: () {
+                setState(() {
+                  _isSortedAZ = false;
+                  _filterAge = null;
+                  _filterDOB = null;
+                  _filterUsers();
+                  Navigator.of(context).pop();
+                });
+              },
+            ),
+            TextButton(
+              child: Text('Close'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _navigateToAddUserScreen() async {
@@ -86,6 +205,7 @@ class _UserListScreenState extends State<UserListScreen> {
         duration: Duration(seconds: 2), // Reduced duration
       ),
     );
+    _sortUsers();
   }
 
   void _showUserDetails(User user) {
@@ -133,6 +253,12 @@ class _UserListScreenState extends State<UserListScreen> {
       appBar: AppBar(
         title: Text('User List'),
         backgroundColor: Colors.teal,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.filter_list),
+            onPressed: _showFilterDialog,
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
