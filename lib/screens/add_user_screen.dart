@@ -292,6 +292,12 @@ class _AddUserScreenState extends State<AddUserScreen> {
 
   Widget _buildDropdownCityField() {
     final cities = ["Ahmedabad", "Surat", "Vadodara", "Rajkot", "Bhavnagar", "Jamnagar", "Junagadh", "Gandhinagar"];
+
+    // Ensure the selected city is one of the items in the list
+    if (!cities.contains(_selectedCity)) {
+      _selectedCity = null;
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: DropdownButtonFormField<String>(
